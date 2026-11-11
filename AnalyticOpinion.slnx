@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="AnalyticOpinion.API/AnalyticOpinion.API.csproj" />
+  <Project Path="AnalyticOpinion.Data/AnalyticOpinion.Data.csproj" />
+  <Project Path="AnalyticOpinion.Worker/AnalyticOpinion.Worker.csproj" />
+</Solution>
