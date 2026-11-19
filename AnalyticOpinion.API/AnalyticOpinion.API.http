@@ -1,6 +1,14 @@
-@AnalyticOpinion.API_HostAddress = http://localhost:5058
+@AnalyticOpinion.API_HostAddress = https://localhost:7055
+# Debe coincidir con ApiSecurity:ApiKey (user-secrets del proyecto API)
+@ApiKey = pon-aqui-tu-api-key
 
-GET {{AnalyticOpinion.API_HostAddress}}/weatherforecast/
+### Primera página de comentarios de redes sociales
+GET {{AnalyticOpinion.API_HostAddress}}/api/social-comments?page=1&pageSize=100
+Accept: application/json
+X-Api-Key: {{ApiKey}}
+
+### Sin API key -> 401
+GET {{AnalyticOpinion.API_HostAddress}}/api/social-comments
 Accept: application/json
 
 ###

@@ -1,14 +1,16 @@
+using AnalyticOpinion.API.Security;
+using AnalyticOpinion.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// Toda acción de la API exige el header X-Api-Key.
+builder.Services.AddControllers(options => options.Filters.Add<ApiKeyAuthorizationFilter>());
 builder.Services.AddOpenApi();
+
+builder.Services.AddSourceRepositories(builder.Configuration);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
