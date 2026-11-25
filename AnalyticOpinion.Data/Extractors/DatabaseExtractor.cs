@@ -1,19 +1,20 @@
 using System.Globalization;
+using AnalyticOpinion.Data.Configuration;
 using AnalyticOpinion.Data.Interfaces;
 using AnalyticOpinion.Data.Models;
 using AnalyticOpinion.Data.Persistence;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace AnalyticOpinion.Data.Extractors;
 
 public sealed class DatabaseExtractor(
     ISqlConnectionFactory connectionFactory,
+    IOptions<DatabaseSourceOptions> options,
     ILogger<DatabaseExtractor> logger) : IExtractor
 {
-    // Source_Type.Type de las reseñas web en ETL_Opinion.
-    private const string WebSourceType = "Web";
-    private const int CommandTimeoutSeconds = 60;
+    private readonly DatabaseSourceOptions _options = options.Value;
 
     public string Name => "BD relacional - Reseñas web";
 
@@ -25,9 +26,9 @@ public sealed class DatabaseExtractor(
 
         await using var command = new SqlCommand(SourceQueries.OpinionsBySourceType, connection)
         {
-            CommandTimeout = CommandTimeoutSeconds
+            CommandTimeout = _options.CommandTimeoutSeconds
         };
-        command.Parameters.Add("@SourceType", System.Data.SqlDbType.NVarChar, 50).Value = WebSourceType;
+        command.Parameters.Add("@SourceType", System.Data.SqlDbType.NVarChar, 50).Value = _options.SourceType;
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         var o = OpinionOrdinals.From(reader);
@@ -53,7 +54,7 @@ public sealed class DatabaseExtractor(
 
         if (rows.Count == 0)
         {
-            logger.LogWarning("La consulta no devolvió reseñas para Source_Type = '{SourceType}'", WebSourceType);
+            logger.LogWarning("La consulta no devolvió reseñas para Source_Type = '{SourceType}'", _options.SourceType);
         }
 
         return rows;
