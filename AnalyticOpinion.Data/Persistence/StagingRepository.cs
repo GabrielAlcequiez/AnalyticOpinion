@@ -1,19 +1,24 @@
 using System.Data;
+using AnalyticOpinion.Data.Configuration;
 using AnalyticOpinion.Data.Interfaces;
 using AnalyticOpinion.Data.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace AnalyticOpinion.Data.Persistence;
 
 // Cada fuente se inserta en su propia transacción: entra completa o no entra.
 public sealed class StagingRepository(
     ISqlConnectionFactory connectionFactory,
+    IOptions<StagingOptions> options,
     ILogger<StagingRepository> logger) : IStagingRepository
 {
+    // Fijo a propósito: es parte del esquema (OpinionAnalytics_Staging.sql) y se usa en SQL dinámico,
+    // así que no se expone en configuración.
     private const string TableName = "dbo.StageOpinion";
-    private const int BatchSize = 1000;
-    private const int CommandTimeoutSeconds = 120;
+
+    private readonly StagingOptions _options = options.Value;
 
     public async Task TruncateAsync(CancellationToken cancellationToken)
     {
@@ -22,7 +27,7 @@ public sealed class StagingRepository(
 
         await using var command = new SqlCommand($"TRUNCATE TABLE {TableName};", connection)
         {
-            CommandTimeout = CommandTimeoutSeconds
+            CommandTimeout = _options.CommandTimeoutSeconds
         };
         await command.ExecuteNonQueryAsync(cancellationToken);
 
@@ -47,8 +52,8 @@ public sealed class StagingRepository(
             using var bulkCopy = new SqlBulkCopy(connection, SqlBulkCopyOptions.CheckConstraints, transaction)
             {
                 DestinationTableName = TableName,
-                BatchSize = BatchSize,
-                BulkCopyTimeout = CommandTimeoutSeconds,
+                BatchSize = _options.BatchSize,
+                BulkCopyTimeout = _options.CommandTimeoutSeconds,
                 EnableStreaming = true
             };
 

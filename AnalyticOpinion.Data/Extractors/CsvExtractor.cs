@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using AnalyticOpinion.Data.Configuration;
 using AnalyticOpinion.Data.Interfaces;
 using AnalyticOpinion.Data.Extractors.Csv;
 using AnalyticOpinion.Data.Models;
@@ -7,31 +8,33 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace AnalyticOpinion.Data.Extractors;
 
 public sealed class CsvExtractor(
     IHostEnvironment environment,
+    IOptions<CsvSourceOptions> options,
     ILogger<CsvExtractor> logger) : IExtractor
 {
-    // Carpeta "data" en la raíz de la solución (relativa al proyecto Worker).
-    private const string CsvFolder = @"..\data";
-    private const string SearchPattern = "surveys*.csv";
+    private readonly CsvSourceOptions _options = options.Value;
 
     public string Name => "CSV - Encuestas internas";
 
     public async Task<IReadOnlyList<StageOpinion>> ExtractAsync(Guid batchId, CancellationToken cancellationToken)
     {
-        var directory = Path.GetFullPath(Path.Combine(environment.ContentRootPath, CsvFolder));
+        // Path.Combine respeta las rutas absolutas; las relativas se resuelven desde el ContentRoot.
+        var directory = Path.GetFullPath(Path.Combine(environment.ContentRootPath, _options.Folder));
+        var searchPattern = _options.SearchPattern;
         if (!Directory.Exists(directory))
         {
             throw new DirectoryNotFoundException($"No existe la carpeta de CSV: {directory}");
         }
 
-        var files = Directory.GetFiles(directory, SearchPattern).Order(StringComparer.OrdinalIgnoreCase).ToArray();
+        var files = Directory.GetFiles(directory, searchPattern).Order(StringComparer.OrdinalIgnoreCase).ToArray();
         if (files.Length == 0)
         {
-            logger.LogWarning("No se encontraron archivos '{Pattern}' en {Directory}", SearchPattern, directory);
+            logger.LogWarning("No se encontraron archivos '{Pattern}' en {Directory}", searchPattern, directory);
             return [];
         }
 

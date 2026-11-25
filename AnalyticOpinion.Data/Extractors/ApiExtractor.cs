@@ -1,20 +1,22 @@
 using System.Globalization;
 using System.Net.Http.Json;
+using AnalyticOpinion.Data.Configuration;
 using AnalyticOpinion.Data.Interfaces;
 using AnalyticOpinion.Data.Models;
 using AnalyticOpinion.Data.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace AnalyticOpinion.Data.Extractors;
 
 public sealed class ApiExtractor(
     HttpClient httpClient,
     IConfiguration configuration,
+    IOptions<ApiSourceOptions> options,
     ILogger<ApiExtractor> logger) : IExtractor
 {
-    private const string ApiUrl = "https://localhost:7055/api/social-comments";
-    private const int PageSize = 100;
+    private readonly ApiSourceOptions _options = options.Value;
 
     public string Name => "API REST - Redes sociales";
 
@@ -33,7 +35,7 @@ public sealed class ApiExtractor(
 
         do
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"{ApiUrl}?page={page}&pageSize={PageSize}");
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{_options.Url}?page={page}&pageSize={_options.PageSize}");
             request.Headers.Add(ApiKeyDefaults.HeaderName, apiKey);
 
             using var response = await httpClient.SendAsync(request, cancellationToken);
