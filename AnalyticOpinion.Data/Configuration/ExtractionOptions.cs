@@ -69,3 +69,12 @@ public sealed class StagingOptions
     [Range(1, 3600)]
     public int CommandTimeoutSeconds { get; set; } = 120;
 }
+
+// Carga de dimensiones en OpinionAnalytics.
+public sealed class LoadOptions
+{
+    public const string SectionName = "Load";
+
+    [Range(1, 3600)]
+    public int CommandTimeoutSeconds { get; set; } = 60;
+}
