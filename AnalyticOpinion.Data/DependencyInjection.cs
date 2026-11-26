@@ -1,6 +1,7 @@
 using AnalyticOpinion.Data.Interfaces;
 using AnalyticOpinion.Data.Configuration;
 using AnalyticOpinion.Data.Extractors;
+using AnalyticOpinion.Data.Loaders;
 using AnalyticOpinion.Data.Persistence;
 using AnalyticOpinion.Data.Services;
 using Microsoft.Extensions.Configuration;
@@ -31,6 +32,16 @@ public static class DependencyInjection
         services.AddTransient<IExtractor>(sp => sp.GetRequiredService<ApiExtractor>());
 
         services.AddTransient<ExtractionService>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddDimensionLoad(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddValidatedOptions<LoadOptions>(configuration, LoadOptions.SectionName);
+
+        services.TryAddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
+        services.AddTransient<IDimensionLoader, DimensionLoader>();
 
         return services;
     }
